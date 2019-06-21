@@ -1,0 +1,168 @@
+const express = require("express");
+require("./db/mongoose");
+const Users  = require("./models/users");
+const Task  = require("./models/task");
+
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+
+app.use(express.json());
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////USERS//////////////////////////////////////////////////////
+////////////////////////////////////////USERS/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.post("/users", async(req, resp) =>{
+	const user = new Users(req.body);
+	try{
+		await user.save();
+		resp.status(201).send(user);
+	}catch(e){
+		resp.status(400).send(e);
+	}
+})
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+app.patch("/users/:id", async(req, resp)=>{
+	const update = Object.keys(req.body);
+	const allowedUpdate = ['name', 'email', 'password', 'age'];
+	const isValidOperation = update.every((update) => allowedUpdate.includes(update));
+	if(!isValidOperation){
+		return resp.status(400).send({error: "Invalid Updates"});
+	}
+	try{
+		const user  = await Users.findByIdAndUpdate(req.params.id, req.body,{new: true, runValidators:true});
+		if(!user){
+			return resp.status(404).send()
+		}
+		resp.send(user);
+	}catch(e){
+		resp.status(400).send(e);
+			}
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/users", (req, resp) =>{
+	Users.find({}).then((users) => {
+	  resp.status(201).send(users);
+	}).catch((err) => {
+	  resp.status(500).send(err)
+	});
+});
+
+app.delete("/users/:id", async(req, resp)=>{
+	try{
+		const user = await Users.findByIdAndDelete(req.params.id);
+		if(!user){
+		return resp.status(400).send();
+		}	
+		resp.send(user);	
+	}catch(e){
+		resp.status(500).send(e);
+	}
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////  TASK /////////////////////////////////////////////
+//////////////////////////////////////////// TASK /////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/users/:id", (req, resp)=>{
+	const _id = req.params.id;
+	Users.findById(_id).then((user) => {
+	  if(!user){
+	  	return resp.status(400).send();
+	  }
+	  resp.send(user);
+	})
+	.catch((err) => {
+	  resp.status(500).send(err);
+	});
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+app.get("/task/:id", (req,resp)=>{
+	const _id = req.params.id;
+	Task.findById(_id).then((task) => {
+	  if(!task){
+	  	return resp.status(400).send();
+	  }
+	  resp.send(task)
+
+	}).catch((err) => {
+	  resp.status(500).send(err);
+	})
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+app.post("/task",(req, resp)=>{
+	const task = new Task(req.body);
+	task.save()
+	.then(() => {
+	  resp.send(task)
+	})
+	.catch((err) => {
+	  resp.status(400).send(err);
+	});
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get("/task", (req, resp)=>{
+	Task.find({})
+	.then((tasks) => {
+	  resp.status(201).send(tasks);
+	})
+	.catch((err) => {
+	  resp.status(400).send(err);
+	});
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.patch("/task/:id", async(req,resp)=>{
+	const uptade = Object.keys(req.body);
+	const allowedUpdate = ["description", "completed"];
+	const isValidOperation = uptade.every((update) => allowedUpdate.includes(update));
+	if(!isValidOperation){
+		return resp.status(400).send({error: "Invalid Update"});
+	}
+	try{
+		const task = await Task.findByIdAndUpdate(req.params.id, req.body,{new:true, runValidators:true});
+		if(!task){
+			return resp.status(400).send();
+		}
+		resp.send(task);
+	}catch(e){
+		resp.status(400).send(e);
+	}
+
+});
+
+app.delete("task/:id", async(req,resp) => {
+	try{
+		const task = await Task.findByIdAndDelete(req.params.id);
+		if(!task){
+			return resp.status(400).send();
+		}
+		resp.send(task);
+	}catch(e){
+			resp.status(500).send(e)
+	}
+});
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+app.listen(port,()=>{
+	console.log(`Server is up on port ${port}`)
+})
