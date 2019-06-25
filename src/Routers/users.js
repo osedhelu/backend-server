@@ -17,6 +17,16 @@ routerUsers.post("/users", async(req, resp) =>{
 		resp.status(400).send(e);
 	}
 });
+
+routerUsers.post('/users/login', async (req, res) => {
+    try {
+        const user = await Users.findByCredentials(req.body.email, req.body.password)
+        res.send(user)
+    } catch (e) {
+        res.status(400).send()
+    }
+})
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,9 +38,14 @@ routerUsers.patch("/users/:id", async(req, resp)=>{
 		return resp.status(400).send({error: "Invalid Updates"});
 	}
 	try{
-		const user  = await Users.findByIdAndUpdate(req.params.id, req.body,{new: true, runValidators:true});
+		// const user  = await Users.findByIdAndUpdate(req.params.id, req.body,{new: true, runValidators:true});
+		const user = await Users.findById(req.params.id);
+		update.forEach((update)=>user[update]=  req.body[update]);
+		await user.save();
+
+
 		if(!user){
-			return resp.status(404).send()
+			return resp.status(404).send();
 		}
 		resp.send(user);
 	}catch(e){

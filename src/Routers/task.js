@@ -54,14 +54,20 @@ routerTask.get("/task", (req, resp)=>{
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 routerTask.patch("/task/:id", async(req,resp)=>{
-	const uptade = Object.keys(req.body);
+	const update = Object.keys(req.body);
 	const allowedUpdate = ["description", "completed"];
-	const isValidOperation = uptade.every((update) => allowedUpdate.includes(update));
+	const isValidOperation = update.every((update) => allowedUpdate.includes(update));
+	
+
 	if(!isValidOperation){
 		return resp.status(400).send({error: "Invalid Update"});
 	}
 	try{
-		const task = await Task.findByIdAndUpdate(req.params.id, req.body,{new:true, runValidators:true});
+		// const task = await Task.findByIdAndUpdate(req.params.id, req.body,{new:true, runValidators:true});
+		const task = await Task.findById(req.params.id);
+		update.forEach((update)=>task[update] = req.body[update]);
+		await task.save();
+
 		if(!task){
 			return resp.status(400).send();
 		}
